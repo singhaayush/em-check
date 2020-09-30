@@ -29,17 +29,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        if (isEmulator(this) || isRooted(this)) {
+        if (isEmulator(this) || isRooted(this))
             alertBoxEmulator()
-        } else {
-            Log.d(
-                TAG,
-                "onCreate: ${Build.HARDWARE} \n ${Build.MODEL} \n ${Build.DISPLAY} \n ${Build.MANUFACTURER} \n ${Build.MODEL}"
-            )
-
-
-        }
-        checkPlayServiceVersion()
+        else
+            checkPlayServiceVersion()
 
     }
 
@@ -50,7 +43,7 @@ class MainActivity : AppCompatActivity() {
             .setCancelable(false)
             .setPositiveButton(
                 "Okay"
-            ) { dialog, which -> finish() }
+            ) { _, _ -> finish() }
             .create()
         alertDialog.show()
     }
@@ -102,7 +95,8 @@ class MainActivity : AppCompatActivity() {
                 .setMessage("Please Update your gPlay servives")
                 .setPositiveButton(
                     "Okay"
-                ) { p0, p1 -> finish() }
+                ) { _, _ -> finish() }
+            alertDialog.show()
 
         }
     }
@@ -111,13 +105,13 @@ class MainActivity : AppCompatActivity() {
 
         //bad way of generating nounce and passik api_key
         SafetyNet.getClient(this).attest(
-            "R2Rra24fVm5xa2Mg".toByteArray(),
-            "AIzaSyB7U2sPFWUGzbEmC5B7bA4utLcc6rJVTYQ"
+            "R2Rra24fVm5xa2Mg".toByteArray(),  //TODO create by using user data and timestamp
+            "AIzaSyB7U2sPFWUGzbEmC5B7bA4utLcc6rJVTYQ" //TODO should be fetched by api
         )
             .addOnSuccessListener(this) {
                 // Indicates communication with the service was successful.
                 // Use response.getJwsResult() to get the result data.
-                //Log.d(TAG, "checkDeviceIntegrity: ${it.jwsResult}")
+
                 try {
                     val jwsObject: JWSObject = JWSObject.parse(it.jwsResult)
                     println("header = " + jwsObject.header)
@@ -125,14 +119,15 @@ class MainActivity : AppCompatActivity() {
                     println("signature = " + jwsObject.signature)
                     println("signature = " + jwsObject.signature.decodeToString())
                     println("payload = " + jwsObject.payload.toJSONObject())
+
                     tv_response.text =
                         jwsObject.payload.toJSONObject().getAsString("ctsProfileMatch")
 
 
-                    val error = jwsObject.payload.toJSONObject().getAsString("error").toString()
+                    val error = jwsObject.payload.toJSONObject().getAsString("error")?.toString()
                     val apkCertificateDigestSha256 =
                         jwsObject.payload.toJSONObject().getAsString("apkCertificateDigestSha256")
-                            .toString()
+                            ?.toString()
 
                     if (error == "internal_error" && apkCertificateDigestSha256 == "[]") {
                         alertBoxEmulator()
