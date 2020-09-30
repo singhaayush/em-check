@@ -30,15 +30,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         if (isEmulator(this) || isRooted(this)) {
-            val alertDialog = AlertDialog.Builder(this)
-                .setTitle("Warning!")
-                .setMessage("This app don't work with emulator or rooted device.")
-                .setCancelable(false)
-                .setPositiveButton(
-                    "Okay"
-                ) { dialog, which -> finish() }
-                .create()
-            alertDialog.show()
+            alertBoxEmulator()
         } else {
             Log.d(
                 TAG,
@@ -49,6 +41,18 @@ class MainActivity : AppCompatActivity() {
         }
         checkPlayServiceVersion()
 
+    }
+
+    private fun alertBoxEmulator() {
+        val alertDialog = AlertDialog.Builder(this)
+            .setTitle("Warning!")
+            .setMessage("This app don't work with emulator or rooted device.")
+            .setCancelable(false)
+            .setPositiveButton(
+                "Okay"
+            ) { dialog, which -> finish() }
+            .create()
+        alertDialog.show()
     }
 
 
@@ -124,6 +128,16 @@ class MainActivity : AppCompatActivity() {
                     tv_response.text =
                         jwsObject.payload.toJSONObject().getAsString("ctsProfileMatch")
 
+
+                    val error = jwsObject.payload.toJSONObject().getAsString("error").toString()
+                    val apkCertificateDigestSha256 =
+                        jwsObject.payload.toJSONObject().getAsString("apkCertificateDigestSha256")
+                            .toString()
+
+                    if (error == "internal_error" && apkCertificateDigestSha256 == "[]") {
+                        alertBoxEmulator()
+                    }
+
                     if (TextUtils.isEmpty(tv_response.text))
                         tv_response.text = "This Device failed Integrity Test"
                 } catch (e: ParseException) {
@@ -139,6 +153,7 @@ class MainActivity : AppCompatActivity() {
 
                     // You can retrieve the status code using the
                     // apiException.statusCode property.
+                    Log.d(TAG, "checkDeviceIntegrity: ${e.statusCode}")
                 } else {
                     Log.d(TAG, "checkDeviceIntegrity: A different, unknown type of error occurred.")
 
